@@ -8,6 +8,7 @@ import FaceRecognition from "../../components/faceRecognition/FaceRecognition";
 import Rank from "../../components/rank/Rank";
 import SignIn from "../../components/sign-in/SignIn";
 import Register from "../../components/register/Register";
+import { URL } from '../../util/url.js';
 
 const testImage = 'https://eyeandfaceclinic.ie/wp-content/uploads/2018/01/beautiful-face-clear-skin.jpg';
 
@@ -30,7 +31,7 @@ class App extends Component {
     constructor(props) {
         super(props);
 
-        this.url = 'http://localhost:8080';
+        this.url = URL;
 
         this.state = initialState;
     }

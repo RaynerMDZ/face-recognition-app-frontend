@@ -1,12 +1,13 @@
 import React, {Component} from "react";
 import './register.css';
+import { URL } from "../../util/url";
 
 class Register extends Component  {
 
     constructor(props) {
         super(props);
 
-        this.url = 'http://localhost:8080'
+        this.url = URL;
 
         this.state = {
             name: '',

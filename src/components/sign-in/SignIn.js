@@ -1,11 +1,12 @@
 import React, {Component} from "react";
 import './signIn.css';
+import { URL } from "../../util/url";
 
 class SignIn extends Component {
     constructor(props) {
         super(props);
 
-        this.url = 'http://localhost:8080'
+        this.url = URL;
 
         this.state = {
             email: '',
