@@ -39,7 +39,7 @@ const App = () => {
         setImageUrl(event.target.value);
     }
 
-    const onPictureSubmit = async () => {
+    const onDetectImage = async () => {
         try {
             const response = await fetch(URL + '/imageUrl', {
                 method: 'post',
@@ -49,9 +49,11 @@ const App = () => {
                 })
             });
 
+            console.log(response);
             const coordinates = await response.json();
+            console.log(coordinates);
 
-            if (coordinates) {
+            if (coordinates.outputs[0].data.regions[0].region_info.bounding_box) {
                 const response = await fetch(URL + '/image', {
                     method: 'put',
                     headers: {'Content-Type': 'application/json'},
@@ -108,7 +110,7 @@ const App = () => {
                     <div>
                         <Logo/>
                         <Rank name={user.name} entries={user.entries}/>
-                        <ImageLinkForm onInputChange={onInputChange} onPictureSubmit={onPictureSubmit}/>
+                        <ImageLinkForm onInputChange={onInputChange} onPictureSubmit={onDetectImage}/>
                         <FaceRecognition imageUrl={imageUrl} box={box}/>}
                     </div>
                     :
