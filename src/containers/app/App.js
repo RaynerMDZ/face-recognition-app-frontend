@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, {useState} from "react";
 import 'tachyons';
 import './App.css';
 import Navigation from "../../components/navigation/Navigation";
@@ -12,31 +12,15 @@ import { URL } from '../../util/url.js';
 
 const testImage = 'https://eyeandfaceclinic.ie/wp-content/uploads/2018/01/beautiful-face-clear-skin.jpg';
 
-const initialState = {
-    imageUrl: '',
-    box: {},
-    route: 'signIn',
-    isSignedIn: false,
-    user: {
-        id: '',
-        name: '',
-        email: '',
-        entries: '',
-        joined: ''
-    }
-}
+const App = () => {
 
-class App extends Component {
+    const [imageUrl, setImageUrl] = useState('');
+    const [box, setBox] = useState({});
+    const [route, setRoute] = useState('signIn');
+    const [isSignedIn, setIsSignedIn] = useState(false);
+    const [user, setUser] = useState({id: '', name: '', email: '', entries: '', joined: ''});
 
-    constructor(props) {
-        super(props);
-
-        this.url = URL;
-
-        this.state = initialState;
-    }
-
-    calculateFaceLocation = (data) => {
+    const calculateFaceLocation = (data) => {
         const faceBox = data.outputs[0].data.regions[0].region_info.bounding_box;
         const image = document.getElementById('inputImage');
         const width = Number(image.width);
@@ -48,87 +32,92 @@ class App extends Component {
             rightColumn: width - (faceBox.right_col * width),
             bottomRow: height - (faceBox.bottom_row * height)
         }
-        this.setState({box: box})
+        setBox(box);
     }
 
-    onInputChange = (event) => {
-        this.setState({ imageUrl: event.target.value })
+    const onInputChange = (event) => {
+        setImageUrl(event.target.value);
     }
 
-    onPictureSubmit = () => {
-        fetch(this.url + '/imageUrl', {
-            method: 'post',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                input: this.state.imageUrl
-            })
-        })
-            .then(response => response.json())
-            .then(response => {
-                if (response) {
-                    fetch(this.url + '/image', {
-                        method: 'put',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({
-                            id: this.state.user.id
-                        })
+    const onPictureSubmit = async () => {
+        try {
+            const response = await fetch(URL + '/imageUrl', {
+                method: 'post',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    input: imageUrl
+                })
+            });
+
+            const coordinates = await response.json();
+
+            if (coordinates) {
+                const response = await fetch(URL + '/image', {
+                    method: 'put',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        id: user.id
                     })
-                        .then(response => response.json())
-                        .then(count => {
-                            const user = {...this.state.user, entries: count}
-                            this.setState({user: user});
-                        })
-                        .catch(err => console.log(err))
+                });
+                const count = await response.json();
+                const updatedUser = {...user, entries: count};
+                setUser(updatedUser);
 
-                    this.calculateFaceLocation(response);
-                }
-            })
-            .catch(err => console.log(err));
-    }
+                calculateFaceLocation(coordinates);
+            }
 
-    onRouteChange = (route) => {
-        if (route === 'signOut') {
-            this.setState(initialState);
-        } else if (route === 'home') {
-            this.setState({isSignedIn: true});
+        } catch (err) {
+            console.log(err);
         }
-        this.setState({route: route})
     }
 
-    loadUser = data => {
-        this.setState({user: {
-                id: data.id,
-                name: data.name,
-                email: data.email,
-                entries: data.entries,
-                joined: data.joined
-            }})
+    const onRouteChange = (route) => {
+        if (route === 'signOut') {
+            clearData();
+        } else if (route === 'home') {
+            setIsSignedIn(true);
+        }
+        setRoute(route);
     }
 
-    render() {
-
-        const { isSignedIn, imageUrl, route, box } = this.state;
-
-        return (
-            <div className={'App'}>
-                <Navigation onRouteChange={this.onRouteChange} isSignedIn={isSignedIn} />
-                {
-                    route === 'home'
-                        ?
-                        <div>
-                            <Logo/>
-                            <Rank name={this.state.user.name} entries={this.state.user.entries} />
-                            <ImageLinkForm onInputChange={this.onInputChange} onPictureSubmit={this.onPictureSubmit} />
-                            <FaceRecognition imageUrl={imageUrl} box={box} />}
-                        </div>
-                        :
-                        route === 'signIn'
-                            ? <SignIn onRouteChange={this.onRouteChange} loadUser={this.loadUser} />
-                            : <Register onRouteChange={this.onRouteChange} loadUser={this.loadUser} />
-                }
-            </div>
-        );
+    const loadUser = data => {
+        const newUser = {
+            id: data.id,
+            name: data.name,
+            email: data.email,
+            entries: data.entries,
+            joined: data.joined
+        }
+        setUser(newUser);
     }
+
+    const clearData = () => {
+        setUser({id: '', name: '', email: '', entries: '', joined: ''});
+        setBox({});
+        setRoute('');
+        setIsSignedIn(false);
+        setImageUrl('');
+    }
+
+    return (
+        <div className={'App'}>
+            <Navigation onRouteChange={onRouteChange} isSignedIn={isSignedIn}/>
+            {
+                route === 'home'
+                    ?
+                    <div>
+                        <Logo/>
+                        <Rank name={user.name} entries={user.entries}/>
+                        <ImageLinkForm onInputChange={onInputChange} onPictureSubmit={onPictureSubmit}/>
+                        <FaceRecognition imageUrl={imageUrl} box={box}/>}
+                    </div>
+                    :
+                    route === 'signIn'
+                        ? <SignIn onRouteChange={onRouteChange} loadUser={loadUser}/>
+                        : <Register onRouteChange={onRouteChange} loadUser={loadUser}/>
+            }
+        </div>
+    )
 }
 
 export default App;
